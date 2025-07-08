@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore.Storage;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TeqRestaurant.Models
 {
@@ -17,10 +19,18 @@ namespace TeqRestaurant.Models
 
         public int CategoryId { get; set; }
 
+        [NotMapped]
+        public IFormFile? ImageFile { get; set; }   
+
+        public string ImageUrl { get; set; } = "https://via.placeholder.com/150";
+
+        [ValidateNever]
         public Category? Category { get; set; }//A product belongs to a category
 
+        [ValidateNever]
         public ICollection<OrderItem> OrderItems { get; set; } //A product can be in many order items
-                                                               
+
+        [ValidateNever]
         public ICollection<ProductIngredient> ProductIngredients { get; set; }//A product can have many ingredients
 
     }

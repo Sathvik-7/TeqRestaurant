@@ -1,4 +1,6 @@
-﻿namespace TeqRestaurant.Models
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+
+namespace TeqRestaurant.Models
 {
     public class Ingredient
     {
@@ -6,6 +8,7 @@
 
         public string Name { get; set; }
 
+        [ValidateNever]
         public ICollection<ProductIngredient> ProductIngredients { get; set; }
     }
 }
