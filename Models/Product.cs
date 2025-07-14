@@ -7,6 +7,11 @@ namespace TeqRestaurant.Models
 {
     public class Product
     {
+        public Product() 
+        {
+            ProductIngredients = new List<ProductIngredient>(); 
+        }
+
         public int ProductId { get; set; }
 
         public string? Name { get; set; }   
