@@ -14,11 +14,11 @@ namespace TeqRestaurant.Controllers
         private Repository<Category> category;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ProductController(ApplicationDbContext context,IWebHostEnvironment webHostEnvironment) 
+        public ProductController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
         {
             product = new Repository<Product>(context);
             ingredient = new Repository<Ingredient>(context);
-            category = new Repository<Category>(context);   
+            category = new Repository<Category>(context);
             _webHostEnvironment = webHostEnvironment;
         }
 
@@ -29,13 +29,13 @@ namespace TeqRestaurant.Controllers
 
         #region Add/Edit
         [HttpGet]
-        public async Task<IActionResult> AddEdit(int id) 
+        public async Task<IActionResult> AddEdit(int id)
         {
             //ingredients info
             ViewBag.Ingredients = await ingredient.GetAllAsync();
-            ViewBag.Categories = await category.GetAllAsync();    
+            ViewBag.Categories = await category.GetAllAsync();
 
-            if(id==0)
+            if (id == 0)
             {
                 ViewBag.Operations = "Add";
                 return View(new Product());
@@ -45,52 +45,52 @@ namespace TeqRestaurant.Controllers
                 Product p = await product.GetByIdAsync(id,
                     new QueryOptions<Product> { Includes = "ProductIngredients.Ingredient, Category" });
                 ViewBag.Operations = "Edit";
-                return View(p); 
+                return View(p);
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddEdit(Product pModel, int[] ingredientId,int catId)
+        public async Task<IActionResult> AddEdit(Product pModel, int[] ingredientId, int catId)
         {
             ViewBag.Ingredients = await ingredient.GetAllAsync();
             ViewBag.Categories = await category.GetAllAsync();
 
-            if (ModelState.IsValid) 
+            if (ModelState.IsValid)
             {
-                if(pModel.ImageFile != null)
+                if (pModel.ImageFile != null)
                 {
-                    string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images"); 
+                    string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
                     string uniqueFileName = Guid.NewGuid().ToString() + "_" + pModel.ImageFile.FileName;
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);   
+                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-                    using(var fileStream = new FileStream(filePath,FileMode.Create))
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
                         await pModel.ImageFile.CopyToAsync(fileStream);
                     }
                     pModel.ImageUrl = uniqueFileName;
                 }
 
-                if(pModel.ProductId == 0)
+                if (pModel.ProductId == 0)
                 {
                     ViewBag.Ingredients = await ingredient.GetAllAsync();
                     ViewBag.Categories = await category.GetAllAsync();
                     pModel.CategoryId = catId;
 
                     //add ingredients
-                    foreach(int id in ingredientId)
+                    foreach (int id in ingredientId)
                     {
-                        pModel.ProductIngredients?.Add(new ProductIngredient { IngredientId=id , ProductId = pModel.ProductId});
+                        pModel.ProductIngredients?.Add(new ProductIngredient { IngredientId = id, ProductId = pModel.ProductId });
                     }
 
                     await product.AddAsync(pModel);
-                    return RedirectToAction("Index","Product");   
+                    return RedirectToAction("Index", "Product");
                 }
-                else 
+                else
                 {
                     var existingProduct = await product.GetByIdAsync(pModel.ProductId,
                     new QueryOptions<Product> { Includes = "ProductIngredients" });
 
-                    if(existingProduct ==  null)
+                    if (existingProduct == null)
                     {
                         ModelState.AddModelError("", "Product not found");
                         ViewBag.Ingredients = await ingredient.GetAllAsync();
@@ -110,13 +110,13 @@ namespace TeqRestaurant.Controllers
                         existingProduct.ProductIngredients?.Add(new ProductIngredient { IngredientId = id, ProductId = pModel.ProductId });
                     }
 
-                    try 
+                    try
                     {
-                        await product.UpdateAsync(existingProduct); 
+                        await product.UpdateAsync(existingProduct);
                     }
-                    catch (Exception ex) 
+                    catch (Exception ex)
                     {
-                        ModelState.AddModelError("",$"Error:{ex.GetBaseException().Message}");
+                        ModelState.AddModelError("", $"Error:{ex.GetBaseException().Message}");
                         ViewBag.Ingredients = await ingredient.GetAllAsync();
                         ViewBag.Categories = await category.GetAllAsync();
                         return View(pModel);
@@ -124,6 +124,23 @@ namespace TeqRestaurant.Controllers
                 }
             }
             return RedirectToAction("Index", "Product");
+        }
+        #endregion
+
+        #region
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                await product.DeleteAsync(id);
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Product not found");
+                return RedirectToAction("Index");
+            }
         }
         #endregion
     }
